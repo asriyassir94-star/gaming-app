@@ -9,6 +9,7 @@ jobs:
         with: { node-version: 20 }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
+      - run: unzip -o gaming-h6r-apk.zip
       - run: mkdir -p www && cp index.html www/
       - run: npm install
       - run: npx cap add android
