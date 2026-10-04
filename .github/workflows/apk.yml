@@ -3,14 +3,134 @@ on: [workflow_dispatch, push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      YT_KEY: ${{ secrets.YT_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
-      - run: unzip -o gaming-h6r-apk.zip
-      - run: mkdir -p www && [ -f www/index.html ] || cp index.html www/
+      - name: Create project
+        run: |
+          mkdir -p www
+          cat > package.json <<'EOF'
+          {"name":"gaming-h6r","version":"1.0.0","private":true,"dependencies":{"@capacitor/core":"^6.0.0","@capacitor/android":"^6.0.0"},"devDependencies":{"@capacitor/cli":"^6.0.0"}}
+          EOF
+          cat > capacitor.config.json <<'EOF'
+          {"appId":"com.gamingh6r.app","appName":"gaming","webDir":"www","plugins":{"CapacitorHttp":{"enabled":true}}}
+          EOF
+          cat > www/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en"><head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+          <title>gaming</title>
+          <style>
+          :root{--bg:#0b0b12;--card:rgba(255,255,255,.07);--bd:rgba(255,255,255,.12);--tx:#f3f3f7;--mut:#9a9aae;--red:#ff2e4d}
+          *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+          body{background:radial-gradient(circle at 20% 0,#2a0f1c,#0b0b12 55%) fixed;color:var(--tx);font-family:system-ui,sans-serif;padding:max(16px,env(safe-area-inset-top)) 16px 40px}
+          h1{font-size:22px;display:flex;align-items:center;gap:8px}
+          .dot{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red)}
+          .sub{color:var(--mut);font-size:13px;margin:4px 0 16px}
+          .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+          .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:16px;backdrop-filter:blur(14px)}
+          .card b{display:block;font-size:26px;margin-top:4px}
+          .card span{color:var(--mut);font-size:12px}
+          h2{font-size:16px;margin:22px 0 10px}
+          .v{display:flex;gap:10px;margin-bottom:10px;padding:10px}
+          .v img{width:120px;height:68px;object-fit:cover;border-radius:10px;flex:none;background:#222}
+          .v p{font-size:13px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+          .v small{color:var(--mut);font-size:12px}
+          button,a.btn{display:block;width:100%;margin-top:14px;padding:13px;border-radius:14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:15px;text-align:center;text-decoration:none}
+          a.btn.red{background:var(--red);border:0;font-weight:600}
+          #msg{color:#ffb4c0;font-size:13px;margin-top:12px}
+          </style></head><body>
+          <h1><i class="dot"></i><span id="name">gaming</span></h1>
+          <p class="sub" id="upd">Kan7mel...</p>
+          <div class="grid">
+            <div class="card"><span>Subscribers</span><b id="subs">-</b></div>
+            <div class="card"><span>Views</span><b id="views">-</b></div>
+            <div class="card"><span>Videos</span><b id="vids">-</b></div>
+            <div class="card"><span>Likes (total)</span><b id="likes">-</b></div>
+          </div>
+          <div id="msg"></div>
+          <h2>Videos</h2>
+          <div id="list"></div>
+          <button onclick="load()">Refresh</button>
+          <a class="btn red" href="https://www.youtube.com/@gaming_h6r">Ft7 channel f YouTube</a>
+          <script>
+          var API_KEY = "7ET_API_KEY_HNA";
+          var CHANNEL_ID = "UC8Hhy2b3MdeOu9vzcA1GMfw";
+          var API = "https://www.googleapis.com/youtube/v3/";
+          var $ = function(i){return document.getElementById(i)};
+          var fmt = function(n){return Number(n).toLocaleString("en-US")};
+
+          async function j(u){var r=await fetch(u);var d=await r.json();if(d.error)throw new Error(d.error.message);return d}
+
+          async function withKey(){
+            var ch=(await j(API+"channels?part=statistics,snippet&id="+CHANNEL_ID+"&key="+API_KEY)).items[0];
+            $("name").textContent=ch.snippet.title;
+            var s=ch.statistics;
+            $("subs").textContent=s.hiddenSubscriberCount?"hidden":fmt(s.subscriberCount);
+            $("views").textContent=fmt(s.viewCount);
+            $("vids").textContent=fmt(s.videoCount);
+            var up="UU"+CHANNEL_ID.slice(2),ids=[],tok="";
+            do{
+              var p=await j(API+"playlistItems?part=contentDetails&maxResults=50&playlistId="+up+"&key="+API_KEY+(tok?"&pageToken="+tok:""));
+              p.items.forEach(function(i){ids.push(i.contentDetails.videoId)});
+              tok=p.nextPageToken;
+            }while(tok&&ids.length<200);
+            var vids=[];
+            for(var i=0;i<ids.length;i+=50){
+              var v=await j(API+"videos?part=snippet,statistics&id="+ids.slice(i,i+50).join(",")+"&key="+API_KEY);
+              vids=vids.concat(v.items);
+            }
+            var tl=0;
+            $("list").innerHTML=vids.map(function(v){
+              var st=v.statistics;tl+=Number(st.likeCount||0);
+              return card(v.id,v.snippet.title,st.viewCount,st.likeCount,st.commentCount);
+            }).join("");
+            $("likes").textContent=fmt(tl);
+          }
+
+          async function withRss(){
+            var t=await (await fetch("https://www.youtube.com/feeds/videos.xml?channel_id="+CHANNEL_ID)).text();
+            var x=new DOMParser().parseFromString(t,"text/xml");
+            var es=[].slice.call(x.getElementsByTagName("entry"));
+            var tv=0,tl=0;
+            $("list").innerHTML=es.map(function(e){
+              var g=function(n,a){var el=e.getElementsByTagName(n)[0];return el?(a?el.getAttribute(a):el.textContent):0};
+              var views=g("media:statistics","views"),likes=g("media:starRating","count");
+              tv+=Number(views);tl+=Number(likes);
+              return card(g("yt:videoId"),g("title"),views,likes);
+            }).join("");
+            $("vids").textContent=es.length+"+";
+            $("views").textContent=fmt(tv);
+            $("likes").textContent=fmt(tl);
+            $("subs").textContent="API key khasha";
+            $("msg").textContent="Bla API key kayban ghir akhir 15 video, w subscribers ma-kaynch.";
+          }
+
+          function card(id,title,views,likes,com){
+            var e=function(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+            return '<a class="card v" style="text-decoration:none;color:inherit" href="https://www.youtube.com/watch?v='+id+'"><img src="https://i.ytimg.com/vi/'+id+'/mqdefault.jpg"><div><p>'+e(title)+'</p><small>'+fmt(views||0)+' views · '+fmt(likes||0)+' likes'+(com!==undefined?' · '+fmt(com||0)+' com':'')+'</small></div></a>';
+          }
+
+          async function load(){
+            $("msg").textContent="";$("upd").textContent="Kan7mel...";
+            try{
+              if(API_KEY&&API_KEY.indexOf("7ET")!==0) await withKey(); else await withRss();
+              $("upd").textContent="Updated: "+new Date().toLocaleTimeString();
+            }catch(err){
+              $("upd").textContent="Error";$("msg").textContent=err.message;
+            }
+          }
+          load();setInterval(load,120000);
+          </script>
+          </body></html>
+          EOF
+          if [ -n "$YT_KEY" ]; then sed -i "s/7ET_API_KEY_HNA/$YT_KEY/" www/index.html; fi
       - run: npm install
       - run: npx cap add android
       - run: npx cap sync android
