@@ -47,7 +47,7 @@ jobs:
           #msg{color:#ffb4c0;font-size:13px;margin-top:12px}
           </style></head><body>
           <h1><i class="dot"></i><span id="name">gaming</span></h1>
-          <p class="sub" id="upd">Kan7mel...</p>
+          <p class="sub" id="upd">Loading...</p>
           <div class="grid">
             <div class="card"><span>Subscribers</span><b id="subs">-</b></div>
             <div class="card"><span>Views</span><b id="views">-</b></div>
@@ -58,7 +58,7 @@ jobs:
           <h2>Videos</h2>
           <div id="list"></div>
           <button onclick="load()">Refresh</button>
-          <a class="btn red" href="https://www.youtube.com/@gaming_h6r">Ft7 channel f YouTube</a>
+          <a class="btn red" href="https://www.youtube.com/@gaming_h6r">Open channel on YouTube</a>
           <script>
           var API_KEY = "7ET_API_KEY_HNA";
           var CHANNEL_ID = "UC8Hhy2b3MdeOu9vzcA1GMfw";
@@ -108,17 +108,17 @@ jobs:
             $("vids").textContent=es.length+"+";
             $("views").textContent=fmt(tv);
             $("likes").textContent=fmt(tl);
-            $("subs").textContent="API key khasha";
-            $("msg").textContent="Bla API key kayban ghir akhir 15 video, w subscribers ma-kaynch.";
+            $("subs").textContent="API key needed";
+            $("msg").textContent="Without an API key only the latest 15 videos show (views and likes). Subscribers need an API key.";
           }
 
           function card(id,title,views,likes,com){
             var e=function(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
-            return '<a class="card v" style="text-decoration:none;color:inherit" href="https://www.youtube.com/watch?v='+id+'"><img src="https://i.ytimg.com/vi/'+id+'/mqdefault.jpg"><div><p>'+e(title)+'</p><small>'+fmt(views||0)+' views · '+fmt(likes||0)+' likes'+(com!==undefined?' · '+fmt(com||0)+' com':'')+'</small></div></a>';
+            return '<a class="card v" style="text-decoration:none;color:inherit" href="https://www.youtube.com/watch?v='+id+'"><img src="https://i.ytimg.com/vi/'+id+'/mqdefault.jpg"><div><p>'+e(title)+'</p><small>'+fmt(views||0)+' views · '+fmt(likes||0)+' likes'+(com!==undefined?' · '+fmt(com||0)+' comments':'')+'</small></div></a>';
           }
 
           async function load(){
-            $("msg").textContent="";$("upd").textContent="Kan7mel...";
+            $("msg").textContent="";$("upd").textContent="Loading...";
             try{
               if(API_KEY&&API_KEY.indexOf("7ET")!==0) await withKey(); else await withRss();
               $("upd").textContent="Updated: "+new Date().toLocaleTimeString();
